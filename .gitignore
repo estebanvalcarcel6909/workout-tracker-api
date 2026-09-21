@@ -1,0 +1,8 @@
+node_modules/
+.env
+*.log
+npm-debug.log*
+workout_tracker.db
+*.db
+*.sqlite
+*.sqlite3
