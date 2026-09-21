@@ -1,5 +1,6 @@
 
-const db = require("../database/database");
+let entrenamientos = [];
+let siguienteId = 1;
 
 const crearEntrenamiento = (
     usuario_id,
@@ -8,29 +9,18 @@ const crearEntrenamiento = (
     fecha,
     callback
 ) => {
-    const sql = `
-        INSERT INTO entrenamientos
-        (usuario_id, nombre, descripcion, fecha)
-        VALUES (?, ?, ?, ?)
-    `;
 
-    db.run(
-        sql,
-        [usuario_id, nombre, descripcion || null, fecha || null],
-        function (err) {
-            if (err) {
-                return callback(err);
-            }
+    const nuevoEntrenamiento = {
+        id: siguienteId++,
+        usuario_id,
+        nombre,
+        descripcion: descripcion || null,
+        fecha: fecha || null
+    };
 
-            callback(null, {
-                id: this.lastID,
-                usuario_id,
-                nombre,
-                descripcion,
-                fecha
-            });
-        }
-    );
+    entrenamientos.push(nuevoEntrenamiento);
+
+    callback(null, nuevoEntrenamiento);
 };
 
 const obtenerEntrenamientos = (
@@ -38,27 +28,18 @@ const obtenerEntrenamientos = (
     limit,
     callback
 ) => {
-    let sql = `
-        SELECT *
-        FROM entrenamientos
-        WHERE usuario_id = ?
-        ORDER BY id DESC
-    `;
 
-    const parametros = [usuario_id];
+    let resultado = entrenamientos.filter(
+        entrenamiento => entrenamiento.usuario_id === usuario_id
+    );
+
+    resultado.sort((a, b) => b.id - a.id);
 
     if (limit !== null) {
-        sql += " LIMIT ?";
-        parametros.push(limit);
+        resultado = resultado.slice(0, limit);
     }
 
-    db.all(sql, parametros, (err, entrenamientos) => {
-        if (err) {
-            return callback(err);
-        }
-
-        callback(null, entrenamientos);
-    });
+    callback(null, resultado);
 };
 
 const actualizarEntrenamiento = (
@@ -69,32 +50,22 @@ const actualizarEntrenamiento = (
     fecha,
     callback
 ) => {
-    const sql = `
-        UPDATE entrenamientos
-        SET nombre = ?,
-            descripcion = ?,
-            fecha = ?
-        WHERE id = ?
-        AND usuario_id = ?
-    `;
 
-    db.run(
-        sql,
-        [
-            nombre,
-            descripcion || null,
-            fecha || null,
-            id,
-            usuario_id
-        ],
-        function (err) {
-            if (err) {
-                return callback(err);
-            }
-
-            callback(null, this.changes);
-        }
+    const entrenamiento = entrenamientos.find(
+        entrenamiento =>
+            entrenamiento.id === id &&
+            entrenamiento.usuario_id === usuario_id
     );
+
+    if (!entrenamiento) {
+        return callback(null, 0);
+    }
+
+    entrenamiento.nombre = nombre;
+    entrenamiento.descripcion = descripcion || null;
+    entrenamiento.fecha = fecha || null;
+
+    callback(null, 1);
 };
 
 const eliminarEntrenamiento = (
@@ -102,23 +73,20 @@ const eliminarEntrenamiento = (
     usuario_id,
     callback
 ) => {
-    const sql = `
-        DELETE FROM entrenamientos
-        WHERE id = ?
-        AND usuario_id = ?
-    `;
 
-    db.run(
-        sql,
-        [id, usuario_id],
-        function (err) {
-            if (err) {
-                return callback(err);
-            }
-
-            callback(null, this.changes);
-        }
+    const indice = entrenamientos.findIndex(
+        entrenamiento =>
+            entrenamiento.id === id &&
+            entrenamiento.usuario_id === usuario_id
     );
+
+    if (indice === -1) {
+        return callback(null, 0);
+    }
+
+    entrenamientos.splice(indice, 1);
+
+    callback(null, 1);
 };
 
 module.exports = {
@@ -127,4 +95,3 @@ module.exports = {
     actualizarEntrenamiento,
     eliminarEntrenamiento
 };
-

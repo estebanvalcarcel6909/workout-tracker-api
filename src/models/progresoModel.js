@@ -1,5 +1,6 @@
 
-const db = require("../database/database");
+let progreso = [];
+let siguienteId = 1;
 
 const crearProgreso = (
     usuario_id,
@@ -10,58 +11,38 @@ const crearProgreso = (
     completado,
     callback
 ) => {
-    const sql = `
-        INSERT INTO progreso
-        (usuario_id, entrenamiento_id, peso, repeticiones, series, completado)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `;
 
-    db.run(
-        sql,
-        [
-            usuario_id,
-            entrenamiento_id,
-            peso,
-            repeticiones,
-            series,
-            completado
-        ],
-        function (err) {
-            if (err) {
-                callback(err);
-            } else {
-                callback(null, {
-                    id: this.lastID,
-                    usuario_id,
-                    entrenamiento_id,
-                    peso,
-                    repeticiones,
-                    series,
-                    completado
-                });
-            }
-        }
-    );
+    const nuevoProgreso = {
+        id: siguienteId++,
+        usuario_id,
+        entrenamiento_id,
+        peso,
+        repeticiones,
+        series,
+        completado
+    };
+
+    progreso.push(nuevoProgreso);
+
+    callback(null, nuevoProgreso);
 };
 
-const obtenerProgreso = (usuario_id, callback) => {
-    const sql = `
-        SELECT *
-        FROM progreso
-        WHERE usuario_id = ?
-        ORDER BY id DESC
-    `;
+const obtenerProgreso = (
+    usuario_id,
+    callback
+) => {
 
-    db.all(sql, [usuario_id], (err, progreso) => {
-        if (err) {
-            callback(err);
-        } else {
-            callback(null, progreso);
-        }
-    });
+    const progresoUsuario = progreso.filter(
+        registro => registro.usuario_id === usuario_id
+    );
+
+    progresoUsuario.sort((a, b) => b.id - a.id);
+
+    callback(null, progresoUsuario);
 };
 
 module.exports = {
     crearProgreso,
     obtenerProgreso
 };
+

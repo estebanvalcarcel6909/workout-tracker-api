@@ -1,7 +1,9 @@
 
-const db = require("../database/database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+let usuarios = [];
+let siguienteId = 1;
 
 // POST - Registrar usuario
 const registrarUsuario = (req, res) => {
@@ -13,34 +15,35 @@ const registrarUsuario = (req, res) => {
         });
     }
 
+    const usuarioExistente = usuarios.find(
+        usuario => usuario.email === email
+    );
+
+    if (usuarioExistente) {
+        return res.status(400).json({
+            mensaje: "El correo ya está registrado"
+        });
+    }
+
     const passwordEncriptada = bcrypt.hashSync(password, 10);
 
-    const sql = `
-        INSERT INTO usuarios (nombre, email, password)
-        VALUES (?, ?, ?)
-    `;
+    const nuevoUsuario = {
+        id: siguienteId++,
+        nombre,
+        email,
+        password: passwordEncriptada,
+        fecha_creacion: new Date().toISOString()
+    };
 
-    db.run(sql, [nombre, email, passwordEncriptada], function (err) {
-        if (err) {
-            if (err.message.includes("UNIQUE")) {
-                return res.status(400).json({
-                    mensaje: "El correo ya está registrado"
-                });
-            }
+    usuarios.push(nuevoUsuario);
 
-            return res.status(500).json({
-                mensaje: "Error al registrar el usuario"
-            });
+    res.status(201).json({
+        mensaje: "Usuario registrado correctamente",
+        usuario: {
+            id: nuevoUsuario.id,
+            nombre: nuevoUsuario.nombre,
+            email: nuevoUsuario.email
         }
-
-        res.status(201).json({
-            mensaje: "Usuario registrado correctamente",
-            usuario: {
-                id: this.lastID,
-                nombre,
-                email
-            }
-        });
     });
 };
 
@@ -54,60 +57,52 @@ const iniciarSesion = (req, res) => {
         });
     }
 
-    const sql = "SELECT * FROM usuarios WHERE email = ?";
+    const usuario = usuarios.find(
+        usuario => usuario.email === email
+    );
 
-    db.get(sql, [email], (err, usuario) => {
-        if (err) {
-            return res.status(500).json({
-                mensaje: "Error al buscar el usuario"
-            });
-        }
-
-        if (!usuario) {
-            return res.status(401).json({
-                mensaje: "Email o contraseña incorrectos"
-            });
-        }
-
-        const contraseñaCorrecta = bcrypt.compareSync(
-            password,
-            usuario.password
-        );
-
-        if (!contraseñaCorrecta) {
-            return res.status(401).json({
-                mensaje: "Email o contraseña incorrectos"
-            });
-        }
-
-        const token = jwt.sign(
-            {
-                id: usuario.id,
-                email: usuario.email
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn: "2h"
-            }
-        );
-
-        res.status(200).json({
-            mensaje: "Inicio de sesión correcto",
-            token: token,
-            usuario: {
-                id: usuario.id,
-                nombre: usuario.nombre,
-                email: usuario.email
-            }
+    if (!usuario) {
+        return res.status(401).json({
+            mensaje: "Email o contraseña incorrectos"
         });
+    }
+
+    const contraseñaCorrecta = bcrypt.compareSync(
+        password,
+        usuario.password
+    );
+
+    if (!contraseñaCorrecta) {
+        return res.status(401).json({
+            mensaje: "Email o contraseña incorrectos"
+        });
+    }
+
+    const token = jwt.sign(
+        {
+            id: usuario.id,
+            email: usuario.email
+        },
+        process.env.JWT_SECRET || "secreto_temporal",
+        {
+            expiresIn: "2h"
+        }
+    );
+
+    res.status(200).json({
+        mensaje: "Inicio de sesión correcto",
+        token: token,
+        usuario: {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email
+        }
     });
 };
 
 // GET - Obtener usuario por ID
 const obtenerUsuarioPorId = (req, res) => {
-    const { id } = req.params;
-
-    const usuarioId = Number(id);
+    const usuarioId = Number(req.params.id);
 
     if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
         return res.status(400).json({
@@ -115,37 +110,30 @@ const obtenerUsuarioPorId = (req, res) => {
         });
     }
 
-    const sql = `
-        SELECT id, nombre, email, fecha_creacion
-        FROM usuarios
-        WHERE id = ?
-    `;
+    const usuario = usuarios.find(
+        usuario => usuario.id === usuarioId
+    );
 
-    db.get(sql, [usuarioId], (err, usuario) => {
-        if (err) {
-            return res.status(500).json({
-                mensaje: "Error al consultar el usuario"
-            });
-        }
-
-        if (!usuario) {
-            return res.status(404).json({
-                mensaje: "Usuario no encontrado"
-            });
-        }
-
-        res.status(200).json({
-            usuario
+    if (!usuario) {
+        return res.status(404).json({
+            mensaje: "Usuario no encontrado"
         });
+    }
+
+    res.status(200).json({
+        usuario: {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            fecha_creacion: usuario.fecha_creacion
+        }
     });
 };
 
-// PUT - Actualización completa del usuario
+// PUT - Actualización completa
 const actualizarUsuario = (req, res) => {
-    const { id } = req.params;
+    const usuarioId = Number(req.params.id);
     const { nombre, email, password } = req.body;
-
-    const usuarioId = Number(id);
 
     if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
         return res.status(400).json({
@@ -159,51 +147,39 @@ const actualizarUsuario = (req, res) => {
         });
     }
 
-    const passwordEncriptada = bcrypt.hashSync(password, 10);
-
-    const sql = `
-        UPDATE usuarios
-        SET nombre = ?,
-            email = ?,
-            password = ?
-        WHERE id = ?
-    `;
-
-    db.run(
-        sql,
-        [nombre, email, passwordEncriptada, usuarioId],
-        function (err) {
-            if (err) {
-                if (err.message.includes("UNIQUE")) {
-                    return res.status(400).json({
-                        mensaje: "El correo ya está registrado"
-                    });
-                }
-
-                return res.status(500).json({
-                    mensaje: "Error al actualizar el usuario"
-                });
-            }
-
-            if (this.changes === 0) {
-                return res.status(404).json({
-                    mensaje: "Usuario no encontrado"
-                });
-            }
-
-            res.status(200).json({
-                mensaje: "Usuario actualizado correctamente"
-            });
-        }
+    const usuario = usuarios.find(
+        usuario => usuario.id === usuarioId
     );
+
+    if (!usuario) {
+        return res.status(404).json({
+            mensaje: "Usuario no encontrado"
+        });
+    }
+
+    const emailExistente = usuarios.find(
+        usuario => usuario.email === email && usuario.id !== usuarioId
+    );
+
+    if (emailExistente) {
+        return res.status(400).json({
+            mensaje: "El correo ya está registrado"
+        });
+    }
+
+    usuario.nombre = nombre;
+    usuario.email = email;
+    usuario.password = bcrypt.hashSync(password, 10);
+
+    res.status(200).json({
+        mensaje: "Usuario actualizado correctamente"
+    });
 };
 
-// PATCH - Actualización parcial del usuario
+// PATCH - Actualización parcial
 const actualizarUsuarioParcial = (req, res) => {
-    const { id } = req.params;
+    const usuarioId = Number(req.params.id);
     const { nombre, email, password } = req.body;
-
-    const usuarioId = Number(id);
 
     if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
         return res.status(400).json({
@@ -217,64 +193,46 @@ const actualizarUsuarioParcial = (req, res) => {
         });
     }
 
-    const campos = [];
-    const valores = [];
+    const usuario = usuarios.find(
+        usuario => usuario.id === usuarioId
+    );
+
+    if (!usuario) {
+        return res.status(404).json({
+            mensaje: "Usuario no encontrado"
+        });
+    }
 
     if (nombre) {
-        campos.push("nombre = ?");
-        valores.push(nombre);
+        usuario.nombre = nombre;
     }
 
     if (email) {
-        campos.push("email = ?");
-        valores.push(email);
+        const emailExistente = usuarios.find(
+            usuario => usuario.email === email && usuario.id !== usuarioId
+        );
+
+        if (emailExistente) {
+            return res.status(400).json({
+                mensaje: "El correo ya está registrado"
+            });
+        }
+
+        usuario.email = email;
     }
 
     if (password) {
-        const passwordEncriptada = bcrypt.hashSync(password, 10);
-
-        campos.push("password = ?");
-        valores.push(passwordEncriptada);
+        usuario.password = bcrypt.hashSync(password, 10);
     }
 
-    valores.push(usuarioId);
-
-    const sql = `
-        UPDATE usuarios
-        SET ${campos.join(", ")}
-        WHERE id = ?
-    `;
-
-    db.run(sql, valores, function (err) {
-        if (err) {
-            if (err.message.includes("UNIQUE")) {
-                return res.status(400).json({
-                    mensaje: "El correo ya está registrado"
-                });
-            }
-
-            return res.status(500).json({
-                mensaje: "Error al actualizar el usuario"
-            });
-        }
-
-        if (this.changes === 0) {
-            return res.status(404).json({
-                mensaje: "Usuario no encontrado"
-            });
-        }
-
-        res.status(200).json({
-            mensaje: "Usuario actualizado parcialmente"
-        });
+    res.status(200).json({
+        mensaje: "Usuario actualizado parcialmente"
     });
 };
 
 // DELETE - Eliminar usuario
 const eliminarUsuario = (req, res) => {
-    const { id } = req.params;
-
-    const usuarioId = Number(id);
+    const usuarioId = Number(req.params.id);
 
     if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
         return res.status(400).json({
@@ -282,23 +240,19 @@ const eliminarUsuario = (req, res) => {
         });
     }
 
-    const sql = "DELETE FROM usuarios WHERE id = ?";
+    const indice = usuarios.findIndex(
+        usuario => usuario.id === usuarioId
+    );
 
-    db.run(sql, [usuarioId], function (err) {
-        if (err) {
-            return res.status(500).json({
-                mensaje: "Error al eliminar el usuario"
-            });
-        }
+    if (indice === -1) {
+        return res.status(404).json({
+            mensaje: "Usuario no encontrado"
+        });
+    }
 
-        if (this.changes === 0) {
-            return res.status(404).json({
-                mensaje: "Usuario no encontrado"
-            });
-        }
+    usuarios.splice(indice, 1);
 
-        res.status(204).send();
-    });
+    res.status(204).send();
 };
 
 module.exports = {
