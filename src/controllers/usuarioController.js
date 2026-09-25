@@ -2,6 +2,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const { JWT_SECRET } = require("../config/env");
+
 let usuarios = [];
 let siguienteId = 1;
 
@@ -83,7 +85,7 @@ const iniciarSesion = (req, res) => {
             id: usuario.id,
             email: usuario.email
         },
-        process.env.JWT_SECRET || "secreto_temporal",
+        JWT_SECRET,
         {
             expiresIn: "2h"
         }

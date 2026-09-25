@@ -1,6 +1,9 @@
 
 const express = require("express");
+
 const router = express.Router();
+
+const verificarToken = require("../../middleware/authMiddleware");
 
 const {
     registrarUsuario,
@@ -9,26 +12,24 @@ const {
     actualizarUsuario,
     actualizarUsuarioParcial,
     eliminarUsuario
-} = require("../controllers/usuarioController");
+} = require("../../controllers/usuarioController");
 
-const verificarToken = require("../middleware/authMiddleware");
-
-// POST - Registrar usuario
+// POST - registrar usuario
 router.post("/registro", registrarUsuario);
 
-// POST - Iniciar sesión
+// POST - iniciar sesión
 router.post("/login", iniciarSesion);
 
-// GET - Obtener usuario por ID
+// GET - obtener usuario por ID
 router.get("/:id", verificarToken, obtenerUsuarioPorId);
 
-// PUT - Actualizar usuario completo
+// PUT - actualizar usuario completo
 router.put("/:id", verificarToken, actualizarUsuario);
 
-// PATCH - Actualizar usuario parcialmente
+// PATCH - actualizar usuario parcialmente
 router.patch("/:id", verificarToken, actualizarUsuarioParcial);
 
-// DELETE - Eliminar usuario
+// DELETE - eliminar usuario
 router.delete("/:id", verificarToken, eliminarUsuario);
 
 module.exports = router;

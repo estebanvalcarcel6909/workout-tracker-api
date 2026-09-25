@@ -2,30 +2,42 @@
 
 API RESTful desarrollada con Node.js y Express para gestionar usuarios, entrenamientos, ejercicios y registros de progreso.
 
+El proyecto utiliza autenticación mediante JWT y almacena los datos temporalmente en memoria, sin utilizar una base de datos.
+
+---
+
 ## Tecnologías utilizadas
 
 * Node.js
 * Express
-* SQLite
 * JWT
 * bcryptjs
 * CORS
 * dotenv
 * Nodemon
 
+---
+
 ## Requisitos
 
 * Node.js
 * npm
 * Visual Studio Code
-* Postman, Thunder Client, curl o cualquier cliente HTTP
+* Thunder Client, curl o cualquier cliente HTTP
+
+---
 
 ## Instalación
 
-Clonar el repositorio y entrar a la carpeta del proyecto:
+Clonar el repositorio:
 
 ```bash
 git clone https://github.com/estebanvalcarcel6909/workout-tracker-api.git
+```
+
+Entrar a la carpeta:
+
+```bash
 cd workout-tracker-api
 ```
 
@@ -35,20 +47,31 @@ Instalar las dependencias:
 npm install
 ```
 
+---
+
 ## Variables de entorno
 
 Crear un archivo `.env` en la raíz del proyecto:
 
 ```env
 PORT=3000
+JWT_SECRET=secreto_temporal
+```
+
+El archivo `.env` está incluido en `.gitignore` y no debe subirse al repositorio.
+
+También se incluye un archivo `.env.example` como referencia:
+
+```env
+PORT=3000
 JWT_SECRET=tu_clave_secreta
 ```
 
-> El archivo `.env` no debe subirse al repositorio porque contiene información privada.
+---
 
 ## Ejecución
 
-Para ejecutar el servidor normalmente:
+Para ejecutar el servidor:
 
 ```bash
 npm start
@@ -66,9 +89,11 @@ El servidor estará disponible en:
 http://localhost:3000
 ```
 
+---
+
 ## Respuesta inicial
 
-Al acceder a:
+Al realizar:
 
 ```text
 GET /
@@ -82,12 +107,15 @@ La API responde:
 }
 ```
 
-## Estructura del proyecto
+---
+
+# Estructura del proyecto
 
 ```text
 workout-tracker-api/
 │
 ├── .gitignore
+├── .env.example
 ├── package.json
 ├── package-lock.json
 ├── README.md
@@ -96,15 +124,15 @@ workout-tracker-api/
     │
     ├── app.js
     │
+    ├── config/
+    │   └── env.js
+    │
     ├── controllers/
     │   ├── ejercicioController.js
     │   ├── entrenamientoController.js
     │   ├── informeController.js
     │   ├── progresoController.js
     │   └── usuarioController.js
-    │
-    ├── database/
-    │   └── database.js
     │
     ├── middleware/
     │   └── authMiddleware.js
@@ -113,16 +141,41 @@ workout-tracker-api/
     │   ├── ejercicioModel.js
     │   ├── entrenamientoModel.js
     │   ├── informeModel.js
-    │   ├── progresoModel.js
-    │   └── usuarioModel.js
+    │   └── progresoModel.js
     │
     └── routes/
-        ├── ejercicioRoutes.js
-        ├── entrenamientoRoutes.js
-        ├── informeRoutes.js
-        ├── progresoRoutes.js
-        └── usuarioRoutes.js
+        │
+        └── v1/
+            ├── ejercicioRoutes.js
+            ├── entrenamientoRoutes.js
+            ├── informeRoutes.js
+            ├── progresoRoutes.js
+            └── usuarioRoutes.js
 ```
+
+---
+
+# Versionado de la API
+
+Las rutas de la API utilizan la versión `v1`.
+
+La estructura general es:
+
+```text
+/api/v1/
+```
+
+Por ejemplo:
+
+```text
+/api/v1/usuarios
+/api/v1/entrenamientos
+/api/v1/ejercicios
+/api/v1/progreso
+/api/v1/informe
+```
+
+---
 
 # Autenticación
 
@@ -140,18 +193,16 @@ Ejemplo:
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
-La API también utiliza una cabecera personalizada:
+El token se obtiene al iniciar sesión.
 
-```text
-X-API-Key: Workout-Tracker-API
-```
+---
 
 # Usuarios
 
 ## Registrar usuario
 
 ```text
-POST /api/usuarios/registro
+POST /api/v1/usuarios/registro
 ```
 
 Request:
@@ -183,10 +234,12 @@ Código:
 201 Created
 ```
 
+---
+
 ## Iniciar sesión
 
 ```text
-POST /api/usuarios/login
+POST /api/v1/usuarios/login
 ```
 
 Request:
@@ -218,40 +271,24 @@ Código:
 200 OK
 ```
 
-## Obtener todos los usuarios
-
-```text
-GET /api/usuarios
-```
-
-Código:
-
-```text
-200 OK
-```
+---
 
 ## Obtener usuario por ID
 
 ```text
-GET /api/usuarios/:id
+GET /api/v1/usuarios/:id
 ```
 
 Ejemplo:
 
 ```text
-GET /api/usuarios/1
+GET /api/v1/usuarios/1
 ```
 
-Response:
+Requiere:
 
-```json
-{
-    "usuario": {
-        "id": 1,
-        "nombre": "Esteban",
-        "email": "esteban@gmail.com"
-    }
-}
+```text
+Authorization: Bearer TOKEN_JWT
 ```
 
 Código:
@@ -266,16 +303,18 @@ Si el usuario no existe:
 404 Not Found
 ```
 
-## Actualizar usuario
+---
+
+## Actualizar usuario completamente
 
 ```text
-PUT /api/usuarios/:id
+PUT /api/v1/usuarios/:id
 ```
 
 Ejemplo:
 
 ```text
-PUT /api/usuarios/1
+PUT /api/v1/usuarios/1
 ```
 
 Request:
@@ -294,23 +333,25 @@ Código:
 200 OK
 ```
 
-## Actualizar parcialmente un usuario
+---
+
+## Actualizar usuario parcialmente
 
 ```text
-PATCH /api/usuarios/:id
+PATCH /api/v1/usuarios/:id
 ```
 
 Ejemplo:
 
 ```text
-PATCH /api/usuarios/1
+PATCH /api/v1/usuarios/1
 ```
 
 Request:
 
 ```json
 {
-    "nombre": "Esteban"
+    "nombre": "Emmanuel"
 }
 ```
 
@@ -328,16 +369,18 @@ Código:
 200 OK
 ```
 
+---
+
 ## Eliminar usuario
 
 ```text
-DELETE /api/usuarios/:id
+DELETE /api/v1/usuarios/:id
 ```
 
 Ejemplo:
 
 ```text
-DELETE /api/usuarios/2
+DELETE /api/v1/usuarios/1
 ```
 
 Respuesta exitosa:
@@ -352,13 +395,17 @@ Si el usuario no existe:
 404 Not Found
 ```
 
+---
+
 # Entrenamientos
 
 ## Listar entrenamientos
 
 ```text
-GET /api/entrenamientos
+GET /api/v1/entrenamientos
 ```
+
+Requiere autenticación.
 
 Código:
 
@@ -366,32 +413,38 @@ Código:
 200 OK
 ```
 
-## Filtrar o limitar entrenamientos
+---
 
-La API permite utilizar Query Strings.
+## Limitar entrenamientos
+
+La API permite utilizar Query Strings mediante `limit`.
 
 Ejemplo:
 
 ```text
-GET /api/entrenamientos?limit=10
+GET /api/v1/entrenamientos?limit=10
 ```
+
+El parámetro debe ser un número entero mayor que `0`.
 
 Código:
 
 ```text
 200 OK
 ```
+
+---
 
 ## Obtener entrenamiento por ID
 
 ```text
-GET /api/entrenamientos/:id
+GET /api/v1/entrenamientos/:id
 ```
 
 Ejemplo:
 
 ```text
-GET /api/entrenamientos/2
+GET /api/v1/entrenamientos/1
 ```
 
 Código:
@@ -406,10 +459,12 @@ Si no existe:
 404 Not Found
 ```
 
+---
+
 ## Crear entrenamiento
 
 ```text
-POST /api/entrenamientos
+POST /api/v1/entrenamientos
 ```
 
 Request:
@@ -417,7 +472,8 @@ Request:
 ```json
 {
     "nombre": "Entrenamiento de piernas",
-    "descripcion": "Rutina para piernas"
+    "descripcion": "Rutina para piernas",
+    "fecha": "2026-09-25"
 }
 ```
 
@@ -427,34 +483,26 @@ Código:
 201 Created
 ```
 
-## Actualizar entrenamiento
-
-```text
-PUT /api/entrenamientos/:id
-```
-
-Ejemplo:
-
-```text
-PUT /api/entrenamientos/2
-```
-
-Código:
-
-```text
-200 OK
-```
+---
 
 ## Actualizar parcialmente entrenamiento
 
 ```text
-PATCH /api/entrenamientos/:id
+PATCH /api/v1/entrenamientos/:id
 ```
 
 Ejemplo:
 
 ```text
-PATCH /api/entrenamientos/2
+PATCH /api/v1/entrenamientos/1
+```
+
+Request:
+
+```json
+{
+    "nombre": "Entrenamiento de pecho"
+}
 ```
 
 Código:
@@ -463,16 +511,18 @@ Código:
 200 OK
 ```
 
+---
+
 ## Eliminar entrenamiento
 
 ```text
-DELETE /api/entrenamientos/:id
+DELETE /api/v1/entrenamientos/:id
 ```
 
 Ejemplo:
 
 ```text
-DELETE /api/entrenamientos/2
+DELETE /api/v1/entrenamientos/1
 ```
 
 Respuesta exitosa:
@@ -487,12 +537,14 @@ Si no existe:
 404 Not Found
 ```
 
+---
+
 # Ejercicios
 
 ## Listar ejercicios
 
 ```text
-GET /api/ejercicios
+GET /api/v1/ejercicios
 ```
 
 Código:
@@ -501,10 +553,12 @@ Código:
 200 OK
 ```
 
+---
+
 ## Crear ejercicio
 
 ```text
-POST /api/ejercicios
+POST /api/v1/ejercicios
 ```
 
 Request:
@@ -536,16 +590,18 @@ Código:
 201 Created
 ```
 
+---
+
 ## Obtener ejercicio por ID
 
 ```text
-GET /api/ejercicios/:id
+GET /api/v1/ejercicios/:id
 ```
 
 Ejemplo:
 
 ```text
-GET /api/ejercicios/1
+GET /api/v1/ejercicios/1
 ```
 
 Código:
@@ -553,56 +609,77 @@ Código:
 ```text
 200 OK
 ```
+
+Si no existe:
+
+```text
+404 Not Found
+```
+
+---
 
 ## Actualizar ejercicio
 
 ```text
-PUT /api/ejercicios/:id
+PATCH /api/v1/ejercicios/:id
 ```
 
-Código:
+Ejemplo:
 
 ```text
-200 OK
-```
-
-## Actualizar parcialmente ejercicio
-
-```text
-PATCH /api/ejercicios/:id
-```
-
-Código:
-
-```text
-200 OK
-```
-
-## Eliminar ejercicio
-
-```text
-DELETE /api/ejercicios/:id
-```
-
-Código:
-
-```text
-204 No Content
-```
-
-# Progreso
-
-## Registrar progreso
-
-```text
-POST /api/progreso
+PATCH /api/v1/ejercicios/1
 ```
 
 Request:
 
 ```json
 {
-    "entrenamiento_id": 2,
+    "nombre": "Sentadilla con barra",
+    "descripcion": "Ejercicio para piernas y glúteos"
+}
+```
+
+Código:
+
+```text
+200 OK
+```
+
+---
+
+## Eliminar ejercicio
+
+```text
+DELETE /api/v1/ejercicios/:id
+```
+
+Ejemplo:
+
+```text
+DELETE /api/v1/ejercicios/1
+```
+
+Respuesta exitosa:
+
+```text
+204 No Content
+```
+
+---
+
+# Progreso
+
+## Registrar progreso
+
+```text
+POST /api/v1/progreso
+```
+
+Request:
+
+```json
+{
+    "entrenamiento_id": 1,
     "peso": 60,
     "repeticiones": 10,
     "series": 3,
@@ -618,7 +695,7 @@ Response:
     "progreso": {
         "id": 1,
         "usuario_id": 1,
-        "entrenamiento_id": 2,
+        "entrenamiento_id": 1,
         "peso": 60,
         "repeticiones": 10,
         "series": 3,
@@ -633,10 +710,12 @@ Código:
 201 Created
 ```
 
+---
+
 ## Listar progreso
 
 ```text
-GET /api/progreso
+GET /api/v1/progreso
 ```
 
 Response:
@@ -647,7 +726,7 @@ Response:
         {
             "id": 1,
             "usuario_id": 1,
-            "entrenamiento_id": 2,
+            "entrenamiento_id": 1,
             "peso": 60,
             "repeticiones": 10,
             "series": 3,
@@ -662,6 +741,86 @@ Código:
 ```text
 200 OK
 ```
+
+---
+
+## Obtener progreso por ID
+
+```text
+GET /api/v1/progreso/:id
+```
+
+Ejemplo:
+
+```text
+GET /api/v1/progreso/1
+```
+
+Código:
+
+```text
+200 OK
+```
+
+Si no existe:
+
+```text
+404 Not Found
+```
+
+---
+
+## Actualizar progreso
+
+```text
+PATCH /api/v1/progreso/:id
+```
+
+Ejemplo:
+
+```text
+PATCH /api/v1/progreso/1
+```
+
+Request:
+
+```json
+{
+    "entrenamiento_id": 1,
+    "peso": 65,
+    "repeticiones": 10,
+    "series": 3,
+    "completado": 1
+}
+```
+
+Código:
+
+```text
+200 OK
+```
+
+---
+
+## Eliminar progreso
+
+```text
+DELETE /api/v1/progreso/:id
+```
+
+Ejemplo:
+
+```text
+DELETE /api/v1/progreso/1
+```
+
+Respuesta exitosa:
+
+```text
+204 No Content
+```
+
+---
 
 ## Validación del progreso
 
@@ -681,24 +840,26 @@ Response:
 }
 ```
 
+---
+
 # Informes
 
 ## Generar informe
 
 ```text
-GET /api/informe
+GET /api/v1/informe
 ```
 
-El informe permite consultar información resumida sobre el progreso de los entrenamientos.
+El informe permite consultar información resumida sobre los entrenamientos y sus registros de progreso.
 
-Ejemplo de respuesta:
+Ejemplo:
 
 ```json
 {
     "mensaje": "Informe generado correctamente",
     "informe": [
         {
-            "entrenamiento_id": 2,
+            "entrenamiento_id": 1,
             "entrenamiento": "Entrenamiento de piernas",
             "registros": 2,
             "series_totales": 6,
@@ -716,6 +877,8 @@ Código:
 200 OK
 ```
 
+---
+
 # Parámetros y Query Strings
 
 La API utiliza parámetros dinámicos mediante `req.params`.
@@ -723,9 +886,13 @@ La API utiliza parámetros dinámicos mediante `req.params`.
 Ejemplos:
 
 ```text
-GET /api/usuarios/1
-GET /api/entrenamientos/2
-GET /api/ejercicios/1
+GET /api/v1/usuarios/1
+
+GET /api/v1/entrenamientos/1
+
+GET /api/v1/ejercicios/1
+
+GET /api/v1/progreso/1
 ```
 
 También utiliza Query Strings mediante `req.query`.
@@ -733,8 +900,10 @@ También utiliza Query Strings mediante `req.query`.
 Ejemplo:
 
 ```text
-GET /api/entrenamientos?limit=10
+GET /api/v1/entrenamientos?limit=10
 ```
+
+---
 
 # Request y Response
 
@@ -772,25 +941,28 @@ res.json()
 res.send()
 ```
 
+---
+
 # Cabeceras HTTP
 
-La API utiliza las siguientes cabeceras:
+Las principales cabeceras utilizadas son:
 
 ```text
 Content-Type
 Authorization
-X-API-Key
 ```
 
 Ejemplo:
 
 ```text
 Content-Type: application/json
+
 Authorization: Bearer TOKEN_JWT
-X-API-Key: Workout-Tracker-API
 ```
 
-La API utiliza `req.get()` para obtener información de las cabeceras recibidas y `res.set()` para configurar cabeceras de respuesta.
+La cabecera `Authorization` se utiliza para enviar el token JWT y acceder a las rutas protegidas.
+
+---
 
 # Códigos de estado HTTP
 
@@ -798,11 +970,13 @@ La API utiliza `req.get()` para obtener información de las cabeceras recibidas 
 | ------ | ----------------------------------------------- |
 | 200    | Solicitud procesada correctamente               |
 | 201    | Recurso creado correctamente                    |
+| 204    | Operación realizada correctamente sin contenido |
 | 400    | Solicitud incorrecta o datos inválidos          |
 | 401    | No autorizado o token inválido                  |
 | 404    | Recurso no encontrado                           |
 | 500    | Error interno del servidor                      |
-| 204    | Operación realizada correctamente sin contenido |
+
+---
 
 # Scripts de npm
 
@@ -817,6 +991,49 @@ Ejecutar el servidor en modo desarrollo:
 ```bash
 npm run dev
 ```
+
+---
+
+# Almacenamiento de datos
+
+Este proyecto actualmente **no utiliza ninguna base de datos**.
+
+Los datos se almacenan temporalmente en memoria utilizando arreglos de JavaScript.
+
+Por ejemplo:
+
+```javascript
+let usuarios = [];
+let entrenamientos = [];
+let ejercicios = [];
+let progreso = [];
+```
+
+Esto significa que los datos se pierden cuando el servidor se detiene o se reinicia.
+
+No se utiliza:
+
+* MySQL
+* SQLite
+* MongoDB
+* PostgreSQL
+* Otra base de datos
+
+---
+
+# Pruebas de la API
+
+Las pruebas de los endpoints pueden realizarse utilizando Thunder Client, curl u otro cliente HTTP.
+
+Para las rutas protegidas se debe incluir:
+
+```text
+Authorization: Bearer TOKEN_JWT
+```
+
+Primero se debe registrar un usuario y posteriormente iniciar sesión para obtener el token JWT.
+
+---
 
 # Control de versiones
 
@@ -836,26 +1053,29 @@ feat/users
 feat/workouts
 feat/exercises
 feat/progress
+feat/readme
 ```
 
 Repositorio:
 
-```text
 https://github.com/estebanvalcarcel6909/workout-tracker-api
-```
+
+---
 
 # Seguridad
 
 El proyecto utiliza:
 
 * JWT para autenticación.
-* bcryptjs para encriptar contraseñas.
+* bcryptjs para proteger las contraseñas.
 * Variables de entorno mediante dotenv.
 * `.gitignore` para evitar subir información privada.
 * Cabecera `Authorization` para proteger las rutas.
-* Cabecera personalizada `X-API-Key`.
+* Validaciones de datos en los controladores.
 
-El archivo `.env` y las bases de datos locales no deben subirse al repositorio.
+El archivo `.env` no debe subirse al repositorio.
+
+---
 
 # Proyecto académico
 
@@ -867,14 +1087,17 @@ Proyecto desarrollado como parte de la actividad:
 
 **Workout Tracker**
 
-La aplicación permite gestionar usuarios, rutinas, ejercicios y registros de progreso mediante una API RESTful.
+La aplicación permite gestionar usuarios, entrenamientos, ejercicios y registros de progreso mediante una API RESTful.
 
-## Objetivos cumplidos
+---
+
+# Objetivos cumplidos
 
 * Inicialización del proyecto Node.js con npm.
 * Configuración de Express.
 * Configuración de Nodemon.
 * Creación de rutas RESTful.
+* Organización de rutas mediante versión `v1`.
 * Métodos GET.
 * Métodos POST.
 * Métodos PUT.
@@ -882,9 +1105,9 @@ La aplicación permite gestionar usuarios, rutinas, ejercicios y registros de pr
 * Métodos DELETE.
 * Uso de parámetros mediante `req.params`.
 * Uso de Query Strings mediante `req.query`.
-* Manejo de `req.body`.
+* Uso de `req.body`.
 * Manejo de cabeceras HTTP.
-* Uso de estados HTTP.
+* Uso de códigos de estado HTTP.
 * Autenticación mediante JWT.
 * Protección de rutas.
 * Gestión de usuarios.
@@ -892,5 +1115,6 @@ La aplicación permite gestionar usuarios, rutinas, ejercicios y registros de pr
 * Gestión de ejercicios.
 * Gestión de progreso.
 * Generación de informes.
-* Persistencia de datos mediante SQLite.
+* Almacenamiento temporal de datos en memoria.
+* Variables de entorno mediante `.env`.
 * Control de versiones mediante Git y GitHub.

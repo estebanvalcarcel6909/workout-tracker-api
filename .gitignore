@@ -1,3 +1,4 @@
+
 node_modules/
 .env
 *.log
@@ -6,3 +7,5 @@ workout_tracker.db
 *.db
 *.sqlite
 *.sqlite3
+.DS_Store
+Thumbs.db
